@@ -39,7 +39,7 @@ A personal blog platform built with AWS fully-managed services, focusing on high
 2. 部署Lambda函数并配置API Gateway；  
 3. 初始化DynamoDB表和Cognito用户池；  
 4. 配置CloudFront分发和WAF规则。  
-*详细步骤见：[deploy-guide.yaml](deploy-guide.yaml)*
+*详细配置见：[deploy-guide.yaml](deploy-guide.yaml)*
 
 ## 联系方式（Contact）
 - GitHub: nnddjak11 
