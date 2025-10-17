@@ -26,7 +26,7 @@ A personal blog platform built with AWS fully-managed services, focusing on high
 - Lambda内存配置：从512MB优化至256MB，调用成本降低30%（响应时间仍<300ms）。
 
 ### 3. 高可用设计（High Availability）
-- S3跨区域备份：静态资源同步至AWS香港区域，避免单区域故障；  
+- S3跨区域备份：静态资源同步至AWS首尔区域，避免单区域故障；  
 - DynamoDB自动扩缩容：根据访问量动态调整读写能力，确保高峰期稳定。
 
 ## 成果（Achievements）
@@ -43,5 +43,5 @@ A personal blog platform built with AWS fully-managed services, focusing on high
 
 ## 联系方式（Contact）
 - GitHub: nnddjak11 
-- LinkedIn: [你的LinkedIn链接] (I'm very sorry, using mainland China's internet restrictions, I am unable to upgrade to a premium account to communicate./非常抱歉，大陆科学上网使用，无法升级高级账号进行沟通。）
+- LinkedIn: www.linkedin.com/in/henbo-li-11b290376 (I'm very sorry, using mainland China's internet restrictions, I am unable to upgrade to a premium account to communicate./非常抱歉，大陆科学上网使用，无法升级高级账号进行沟通。）
 - Email: l1872887583@163.com
