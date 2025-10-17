@@ -6,7 +6,7 @@ A personal blog platform built with AWS fully-managed services, focusing on high
 传统博客需要维护服务器，成本高且运维繁琐。本项目基于AWS Serverless架构，实现“零服务器管理”的博客系统，支持管理员文章管理和全球用户访问。
 
 ## 架构设计（Architecture）
-![架构图](iamges/architect-pic.PNG)  
+![架构图]([iamges/architect-pic.PNG](https://github.com/nnddjak11/aws-serverless-blog/blob/main/images/architect-pic.PNG))  
 *点击查看高清图：[Architecture Design](images/architect-pic.PNG)*
 
 ### 核心服务（Core AWS Services）
