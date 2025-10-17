@@ -1,0 +1,258 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "AWS Serverless Blog - 全托管架构（S3+DynamoDB+Lambda+API Gateway+Cognito+CloudFront）"
+# 更新中...
+# 参数：避免硬编码，方便修改（如桶名需全局唯一）
+Parameters:
+  BlogBucketName:
+    Type: String
+    Description: "存储前端HTML/图片的S3桶名"
+    Default: "d3-static-website"  
+
+  CognitoUserPoolName:
+    Type: String
+    Description: "Cognito用户池名称（管理员认证用）"
+    Default: "my-blog-admin-pool"
+
+# 资源定义
+Resources:
+  ###########################################################################
+  # 1. IAM角色：给Lambda授权（仅允许访问必要资源，最小权限原则）
+  ###########################################################################
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "blog-lambda-execution-role"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole  # 基础日志权限
+      Policies:
+        - PolicyName: "blog-lambda-access-policy"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # 允许Lambda读写DynamoDB（仅操作文章表）
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                Resource: !GetAtt ArticleTable.Arn  # 关联下方的DynamoDB表
+              # 允许Lambda访问S3（仅读取前端文件，用于预览等场景）
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub "${BlogBucket.Arn}/*"  # 关联下方的S3桶
+
+  ###########################################################################
+  # 2. 数据存储：S3（前端静态资源）+ DynamoDB（文章数据）
+  ###########################################################################
+  # S3桶：存储HTML、CSS、图片等前端文件
+  BlogBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BlogBucketName
+      VersioningConfiguration:
+        Status: Enabled  # 开启版本控制，方便文件回滚
+      LifecycleConfiguration:  # 成本优化：自动转移低频文件
+        Rules:
+          - Id: "30daysToArchive"
+            Status: Enabled
+            Transition:
+              Days: 30
+              StorageClass: STANDARD_IA  # 30天未访问→低频存储
+
+  # DynamoDB表：存储文章数据（ID、标题、内容、创建时间等）
+  ArticleTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "BlogArticles"
+      AttributeDefinitions:
+        - AttributeName: id  # 文章ID（主键）
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST  # 按需付费，适合访问量波动的个人项目
+      SSESpecification:  # 加密数据（安全最佳实践）
+        SSEEnabled: true
+
+  ###########################################################################
+  # 3. 认证与计算：Cognito（管理员登录）+ Lambda（后端逻辑）
+  ###########################################################################
+  # Cognito用户池：管理管理员账号（邮箱+密码登录）
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Ref CognitoUserPoolName
+      AutoVerifiedAttributes:
+        - email  # 自动验证邮箱
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+
+  # Cognito用户池客户端：供前端调用认证接口
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: "blog-admin-client"
+      AllowedOAuthFlows:
+        - implicit  # 简化模式（适合前端直接调用）
+      AllowedOAuthScopes:
+        - email
+        - openid
+      CallbackURLs:
+        - "https://localhost:3000"  # 本地测试回调地址（可替换成你的域名）
+
+  # Lambda函数：处理文章CRUD逻辑（与API Gateway联动）
+  BlogLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "blog-article-handler"
+      Runtime: python3.9  # 假设你用Python开发
+      Role: !GetAtt LambdaExecutionRole.Arn  # 关联上方的IAM角色
+      Handler: lambda_function.lambda_handler  # 函数入口（文件名.函数名）
+      Code:
+        ZipFile: |  # 核心逻辑示例（实际项目替换成你的完整代码）
+          import boto3
+          import json
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table('blog_articles')
+
+          def lambda_handler(event, context):
+              http_method = event['httpMethod']
+              # 处理GET请求（查询文章）
+              if http_method == 'GET':
+                  response = table.scan()
+                  return {'statusCode': 200, 'body': json.dumps(response['Items'])}
+              # 处理POST请求（新建文章）
+              elif http_method == 'POST':
+                  item = json.loads(event['body'])
+                  table.put_item(Item=item)
+                  return {'statusCode': 201, 'body': json.dumps({'message': 'Article created'})}
+              else:
+                  return {'statusCode': 405, 'body': json.dumps({'message': 'Method not allowed'})}
+      MemorySize: 256  # 内存配置（成本优化：从512MB降至256MB）
+      Timeout: 10  # 超时时间（10秒足够处理简单请求）
+
+  ###########################################################################
+  # 4. API与分发：API Gateway（接口入口）+ CloudFront（前端加速）
+  ###########################################################################
+  # API Gateway：管理前端调用的接口
+  BlogApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: "blog-api"
+      Description: "博客系统API接口（文章CRUD）"
+
+  # API资源：定义接口路径（如/articles）
+  ApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BlogApiGateway
+      ParentId: !GetAtt BlogApiGateway.RootResourceId
+      PathPart: "articles"  # 接口路径：/articles
+
+  # API方法：GET（查询文章）
+  ApiGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref BlogApiGateway
+      ResourceId: !Ref ApiResource
+      HttpMethod: GET
+      AuthorizationType: COGNITO_USER_POOLS  # 需Cognito认证才能访问
+      AuthorizerId: !Ref ApiAuthorizer  # 关联下方的Cognito授权器
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BlogLambdaFunction.Arn}/invocations"
+
+  # API方法：POST（新建文章）
+  ApiPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref BlogApiGateway
+      ResourceId: !Ref ApiResource
+      HttpMethod: POST
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref ApiAuthorizer
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BlogLambdaFunction.Arn}/invocations"
+
+  # Cognito授权器：关联API Gateway和Cognito用户池
+  ApiAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: "blog-cognito-authorizer"
+      RestApiId: !Ref BlogApiGateway
+      Type: COGNITO_USER_POOLS
+      ProviderARNs:
+        - !GetAtt CognitoUserPool.Arn
+
+  # API部署：生成可访问的API地址
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref BlogApiGateway
+    DependsOn:  # 确保所有方法定义完成后再部署
+      - ApiGetMethod
+      - ApiPostMethod
+
+  # 允许API Gateway调用Lambda（触发器关联）
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref BlogLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BlogApiGateway}/*/*"
+
+  # CloudFront：分发S3中的前端文件（全球加速）
+  BlogCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt BlogBucket.DomainName  # 关联S3桶
+            Id: "S3-BlogOrigin"
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only  # 强制HTTPS（安全最佳实践）
+        Enabled: true
+        DefaultRootObject: "index.html"  # 前端首页
+        DefaultCacheBehavior:
+          TargetOriginId: "S3-BlogOrigin"
+          ViewerProtocolPolicy: redirect-to-https  # HTTP自动跳转HTTPS
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # 托管缓存策略（CachingOptimized）
+
+# 输出：部署后需要用到的资源信息（如API地址、CloudFront域名）
+Outputs:
+  BlogBucketURL:
+    Description: "S3前端桶URL"
+    Value: !GetAtt BlogBucket.WebsiteURL
+
+  ApiEndpoint:
+    Description: "API Gateway接口地址"
+    Value: !Sub "https://${BlogApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${ApiDeployment}/articles"
+
+  CloudFrontDomain:
+    Description: "CloudFront分发域名（前端访问用）"
+    Value: !GetAtt BlogCloudFrontDistribution.DomainName
+
+  CognitoUserPoolId:
+    Description: "Cognito用户池ID"
+    Value: !Ref CognitoUserPool
