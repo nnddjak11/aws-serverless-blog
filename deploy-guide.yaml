@@ -105,7 +105,7 @@ Resources:
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      UserPoolId: ap-southeast-1_JD2WBTmQV
+      UserPoolId: ap-southeast-1_xxxxxxx
       ClientName: "my-blog-admin-poolt"
       AllowedOAuthFlows:
         - implicit  # 简化模式（适合前端直接调用）
@@ -136,7 +136,7 @@ Resources:
           dynamodb = boto3.resource('dynamodb')
           cognito_idp = boto3.client('cognito-idp')
           table_name = 'BlogArticles'  # 与你的DynamoDB表名一致
-          USER_POOL_ID = 'ap-southeast-1_JD2WBTmQV'  # 你的Cognito用户池ID
+          USER_POOL_ID = 'ap-southeast-1_xxxxxx'  # 你的Cognito用户池ID
 
           def lambda_handler(event, context):
             """主Lambda处理函数 - 仅保留文章接口，用Authorization头验证权限"""
@@ -244,9 +244,9 @@ Resources:
         Enabled: true
         DefaultRootObject: "static-bloh/index.html"  # 前端首页
         DefaultCacheBehavior:
-          TargetOriginId: "S3-BlogOrigin"
+          TargetOrigin: "S3-BlogOrigin"
           ViewerProtocolPolicy: redirect-to-https  # HTTP自动跳转HTTPS
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # 托管缓存策略（CachingOptimized）
+          CachePolicy: 658327ea-f89d-4fab-a63d-7e88639e58f6  # 托管缓存策略（CachingOptimized）
 
 # 输出：部署后需要用到的资源信息（如API地址、CloudFront域名）
 Outputs:
@@ -262,6 +262,3 @@ Outputs:
     Description: "CloudFront分发域名（前端访问用）"
     Value: d3phwl6o1dzj8r.cloudfront.net
 
-  CognitoUserPoolId:
-    Description: "Cognito用户池ID"
-    Value: ap-southeast-1_JD2WBTmQV
