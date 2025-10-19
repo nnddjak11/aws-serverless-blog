@@ -8,7 +8,7 @@ Solves traditional blog pain points (high server maintenance costs) via AWS Serv
 
 
 ## 架构设计（Architecture）  
-![Architecture Diagram](https://github.com/nnddjak11/aws-serverless-blog/blob/main/images/architect-pic.PNG)  
+![Architecture Diagram](https://github.com/nnddjak11/aws-serverless-blog/tree/main/image)
 *High-res: [Architecture Design](images/architect-pic.PNG)*  
 
 ### 核心服务与分布式设计（Core Services）  
