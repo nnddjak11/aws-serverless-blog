@@ -9,7 +9,7 @@ Solves traditional blog pain points (high server maintenance costs) via AWS Serv
 
 ## 架构设计（Architecture）  
 ![Architecture Diagram](https://github.com/nnddjak11/aws-serverless-blog/blob/main/image/architect-pic.PNG)
-*High-res: [Architecture Design](images/architect-pic.PNG)*  
+*High-res: [Architecture Design](image/architect-pic.PNG)*  
 
 ### 核心服务与分布式设计（Core Services）  
 1. **Frontend**: S3 (static assets) + CloudFront (global CDN)  
