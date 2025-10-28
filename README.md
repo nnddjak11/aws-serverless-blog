@@ -52,8 +52,9 @@ Use AWS CloudFormation for consistent setup:
 
 ## 联系方式（Contact）  
 - GitHub: [nnddjak11](https://github.com/nnddjak11)  
-- Email: l1872887583@163.com  
-- Note: Email preferred (regional network limits LinkedIn responsiveness)  
+- Email: l1872887583@163.com
+- LinkedIn: Hengbo Li
+- Note: Email preferred (Sorry,regional network limits LinkedIn responsiveness)  
 
 
 *Built with AWS SAA-C03 best practices | Oct 2025*
