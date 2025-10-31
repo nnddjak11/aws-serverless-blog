@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: "AWS Serverless Blog - 全托管架构（S3+DynamoDB+Lambda+API Gateway+Cognito+CloudFront）"
-# Done
+
 # 参数：避免硬编码，方便修改（如桶名需全局唯一）
 Parameters:
   BlogBucketName:
@@ -173,40 +173,31 @@ Resources:
   ApiResource:
     Type: AWS::ApiGateway::Resource
     Properties:
-      HTTPtApiId: yg5mi1c4q5
       PathPart: "articles"  # 接口路径：/articles
       Protocol: HTTP
   # API方法：GET（查询文章）
   ApiGetMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      HTTPApiId: 8c8i6vh
       HttpMethod: GET
       AuthorizationType: NONE  # 需Cognito认证才能访问
-      AuthorizerId: NONE  # 关联下方的Cognito授权器
       Integration:
         Type: Lambda
-        Integration ID: pj7joo4
 
   # API方法：POST（新建文章）
   ApiPostMethod:
     Type: AWS::ApiGateway::Method
     Properties:
-      HTTPApiId: !Ref BlogApiGateway
-      ResourceId: !Ref ApiResource
       HttpMethod: POST
       AuthorizationType: JWT
-      AuthorizerId: ihsdmm
       Integration:
         Type: Lambda
-        Integration ID: dqvae1t
 
   # Cognito授权器：关联API Gateway和Cognito用户池
   ApiAuthorizer:
     Type: AWS::ApiGateway::Authorizer
     Properties:
       Name: "CognitoJWTAuthorizer"
-      AuthorizerID: ihsdmm
       Type: JWT
       IdentitySources:
         - $request.header.Authorization
@@ -214,11 +205,10 @@ Resources:
   # API部署：生成可访问的API地址
   ApiDeployment:
     Type: AWS::ApiGateway::Deployment
-    Properties:
-      HTTPApiId: yg5mi1c4q5
     DependsOn:  # 确保所有方法定义完成后再部署
       - ApiGetMethod
       - ApiPostMethod
+      ...
 
   # 允许API Gateway调用Lambda（触发器关联）
   LambdaApiPermission:
@@ -227,7 +217,7 @@ Resources:
       FunctionName: my-blog-backend
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: arn:aws:lambda:ap-southeast-1:46598326****:function:my-blog-backend
+      SourceArn: arn:aws:lambda:ap-southeast-1:465983******:function:my-blog-backend
 
   # CloudFront：分发S3中的前端文件（全球加速）
   BlogCloudFrontDistribution:
@@ -253,10 +243,6 @@ Outputs:
   BlogBucketURL:
     Description: "S3前端桶URL"
     Value: http://d3-static-website.s3-website-ap-southeast-1.amazonaws.com
-
-  ApiEndpoint:
-    Description: "API Gateway接口地址"
-    Value: !Sub "https://yg5mi1c4q5.execute-api.ap-southeast-1.amazonaws.com"
 
   CloudFrontDomain:
     Description: "CloudFront分发域名（前端访问用）"
