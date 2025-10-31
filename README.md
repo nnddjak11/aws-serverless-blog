@@ -5,7 +5,7 @@ A distributed personal blog built with AWS fully-managed services—focused on *
 
 ## 项目背景（Project Background）  
 Solves traditional blog pain points (high server maintenance costs) via AWS Serverless. Upgraded to **Singapore + Hong Kong multi-region architecture** to avoid single-region outages and reduce global access latency. Supports admin article management (create/update/delete) and global user access.  
-
+Link:https://d3phwl6o1dzj8r.cloudfront.net
 
 ## 架构设计（Architecture）  
 ![Architecture Diagram](https://github.com/nnddjak11/aws-serverless-blog/blob/main/image/architect-pic.PNG)
@@ -47,7 +47,7 @@ Use AWS CloudFormation for consistent setup:
 3. Set up Lambda + API Gateway + Cognito  
 4. Configure CloudFront + WAF  
 
-*Full guide + template: [deploy-guide.md](deploy-guide.md)*  
+*Full guide + template: [deploy-guide.yaml](deploy-guide.yaml)*  
 
 
 ## 联系方式（Contact）  
