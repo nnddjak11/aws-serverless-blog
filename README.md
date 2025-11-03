@@ -3,11 +3,11 @@
 A distributed personal blog built with AWS fully-managed services—focused on **multi-region high availability**, **global low latency**, and **serverless cost savings**.  
 
 
-## 项目背景（Project Background）  
+## 背景（Project Background）  
 Solves traditional blog pain points (high server maintenance costs) via AWS Serverless. Upgraded to **Singapore + Hong Kong multi-region architecture** to avoid single-region outages and reduce global access latency. Supports admin article management (create/update/delete) and global user access.  
 Link:https://d3phwl6o1dzj8r.cloudfront.net
 
-## 架构设计（Architecture）  
+## 架构（Architecture）  
 ![Architecture Diagram](https://github.com/nnddjak11/aws-serverless-blog/blob/main/image/architect-pic.PNG)
 *High-res: [Architecture Design](image/architect-pic.PNG)*  
 
@@ -24,7 +24,7 @@ Link:https://d3phwl6o1dzj8r.cloudfront.net
 5. **Security/Monitoring**: WAF (blocks attacks) + CloudWatch (10min alerts)  
 
 
-## 技术亮点（Key Technical Details）  
+## 技术（Key Technical Details）  
 1. **Distributed Data**: DynamoDB Global Table ensures cross-region data consistency; Lambda auto-switches regions on failure.  
 2. **Global Delivery**: S3 CRR + CloudFront cuts European user latency from 300ms to 80ms.  
 3. **Cost Optimization**:  
@@ -33,7 +33,7 @@ Link:https://d3phwl6o1dzj8r.cloudfront.net
    - DynamoDB on-demand mode (pay only for actual usage)  
 
 
-## 项目成果（Achievements）  
+## 成果（Achievements）  
 - Availability: 99.99% (annual downtime < 53 mins)  
 - Global latency: 80ms average (vs. 250ms single-region)  
 - Monthly cost: < $25 (vs. $80+ for EC2-based blogs)  
