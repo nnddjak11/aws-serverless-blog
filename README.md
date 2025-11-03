@@ -48,12 +48,6 @@ Use AWS CloudFormation for consistent setup:
 4. Configure CloudFront + WAF  
 
 *Full guide + template: [deploy-guide.yaml](deploy-guide.yaml)*  
-
-
-## 联系方式（Contact）  
-- GitHub: [nnddjak11](https://github.com/nnddjak11)  
-- Email: l1872887583@163.com
-- LinkedIn: Hengbo Li
 - Note: Email preferred (Sorry,regional network limits LinkedIn responsiveness)  
 
 
